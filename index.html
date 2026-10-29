@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>邓宁-克鲁格效应自测</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: radial-gradient(circle at 20% 0%, #1e1b3a 0%, #0b0d14 45%, #08090d 100%);
+    color: #e8eaf0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 32px 16px 80px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #app { width: 100%; max-width: 720px; }
+
+  .card {
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 20px;
+    padding: 32px 28px;
+    backdrop-filter: blur(12px);
+    animation: fade .35s ease;
+  }
+
+  @keyframes fade {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: .18em;
+    color: #8b7cff;
+    font-weight: 700;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
+
+  h1 { font-size: clamp(22px, 5vw, 30px); line-height: 1.35; margin-bottom: 16px; }
+  h2 { font-size: clamp(18px, 4vw, 22px); line-height: 1.4; margin-bottom: 12px; }
+
+  .lead { font-size: 15px; color: #b9c0d4; margin-bottom: 20px; }
+  .sub  { font-size: 14px; color: #9aa3b8; margin-bottom: 26px; }
+
+  .list { list-style: none; margin: 22px 0; }
+  .list li {
+    display: flex; align-items: flex-start; gap: 10px;
+    font-size: 14.5px; color: #c3c9da; padding: 7px 0;
+  }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(135deg, #8b7cff, #c084fc); margin-top: 9px;
+  }
+
+  .note {
+    font-size: 13px; color: #7d859b; background: rgba(255,255,255,.03);
+    border-left: 2px solid rgba(139,124,255,.4);
+    padding: 12px 14px; border-radius: 0 8px 8px 0; margin: 22px 0;
+    line-height: 1.7;
+  }
+
+  .btn {
+    display: block; width: 100%; padding: 15px;
+    border: none; border-radius: 13px;
+    background: linear-gradient(135deg, #6d5efc, #a855f7);
+    color: #fff; font-size: 16px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    transition: transform .15s, box-shadow .2s;
+    margin-top: 24px;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(109,94,252,.35); }
+  .btn:active { transform: translateY(0); }
+
+  .btn.ghost {
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.12);
+    color: #c3c9da;
+  }
+  .btn.ghost:hover { box-shadow: none; background: rgba(255,255,255,.1); }
+
+  /* ---------- 滑块 ---------- */
+  .field { margin-bottom: 32px; }
+  .field-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 16px; margin-bottom: 14px; font-size: 14.5px; color: #c3c9da;
+  }
+  .field-head strong {
+    color: #a78bfa; font-size: 17px; font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 6px; border-radius: 3px;
+    background: rgba(255,255,255,.12); outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+    background: linear-gradient(135deg, #6d5efc, #a855f7);
+    box-shadow: 0 0 0 4px rgba(109,94,252,.18); cursor: pointer;
+    transition: box-shadow .2s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover {
+    box-shadow: 0 0 0 7px rgba(109,94,252,.25);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 50%; border: none;
+    background: linear-gradient(135deg, #6d5efc, #a855f7); cursor: pointer;
+  }
+  .range-ticks {
+    display: flex; justify-content: space-between;
+    font-size: 11.5px; color: #6b7288; margin-top: 8px;
+  }
+
+  /* ---------- 答题 ---------- */
+  .progress {
+    height: 6px; background: rgba(255,255,255,.08);
+    border-radius: 3px; overflow: hidden; margin-bottom: 22px;
+  }
+  .progress > div {
+    height: 100%; border-radius: 3px;
+    background: linear-gradient(90deg, #6d5efc, #c084fc);
+    transition: width .35s cubic-bezier(.22,1,.36,1);
+  }
+  .qmeta { font-size: 12.5px; color: #8b7cff; font-weight: 600; letter-spacing: .06em; margin-bottom: 12px; }
+  .qtext { font-size: clamp(16px, 3.6vw, 18.5px); line-height: 1.6; margin-bottom: 24px; }
+
+  .option {
+    display: block; width: 100%; text-align: left;
+    padding: 14px 16px; margin-bottom: 10px;
+    background: rgba(255,255,255,.04);
+    border: 1px solid rgba(255,255,255,.09);
+    border-radius: 12px; color: #dfe2ea;
+    font-size: 15px; font-family: inherit; cursor: pointer;
+    transition: background .15s, border-color .15s, transform .1s;
+  }
+  .option:hover { background: rgba(109,94,252,.14); border-color: rgba(109,94,252,.5); }
+  .option:active { transform: scale(.995); }
+  .option.selected {
+    background: rgba(109,94,252,.28);
+    border-color: #8b7cff; color: #fff;
+  }
+  .option.locked { pointer-events: none; }
+
+  /* ---------- 结果 ---------- */
+  .verdict {
+    margin: 24px 0 28px; padding: 22px;
+    border-radius: 15px; border: 1px solid;
+    background: rgba(255,255,255,.03);
+  }
+  .verdict-badge {
+    display: inline-block; font-size: 12px; font-weight: 700;
+    letter-spacing: .06em; padding: 4px 11px; border-radius: 999px;
+    margin-bottom: 12px;
+  }
+  .verdict h2 { font-size: clamp(18px, 4vw, 21px); margin-bottom: 12px; }
+  .verdict p { font-size: 14.5px; color: #b9c0d4; line-height: 1.8; }
+
+  .compare { display: flex; flex-direction: column; gap: 14px; margin: 26px 0 8px; }
+  .cmp-row {
+    display: grid; grid-template-columns: 92px 1fr 66px;
+    align-items: center; gap: 12px;
+  }
+  .cmp-label { font-size: 13px; color: #9aa3b8; }
+  .cmp-bar { height: 12px; background: rgba(255,255,255,.07); border-radius: 6px; overflow: hidden; }
+  .cmp-fill { height: 100%; border-radius: 6px; transition: width 1s cubic-bezier(.22,1,.36,1); }
+  .cmp-fill.pred { background: linear-gradient(90deg, #8b7cff, #c084fc); }
+  .cmp-fill.real { background: linear-gradient(90deg, #22d3ee, #34d399); }
+  .cmp-val { font-size: 13px; text-align: right; color: #cfd4e3; font-variant-numeric: tabular-nums; }
+
+  .meta-line {
+    font-size: 13.5px; color: #9aa3b8; margin-top: 18px;
+    padding-top: 18px; border-top: 1px solid rgba(255,255,255,.07);
+  }
+
+  details { margin-top: 26px; }
+  summary {
+    cursor: pointer; font-weight: 600; font-size: 14.5px;
+    color: #a5b4fc; padding: 12px 0; list-style: none;
+    user-select: none;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: '▸ '; display: inline-block; transition: transform .2s; }
+  details[open] summary::before { content: '▾ '; }
+
+  .review-item {
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+    border: 1px solid rgba(255,255,255,.07);
+    background: rgba(255,255,255,.025);
+  }
+  .review-item.ok { border-left: 3px solid #34d399; }
+  .review-item.no { border-left: 3px solid #f87171; }
+  .review-head { display: flex; gap: 9px; font-size: 14px; margin-bottom: 10px; line-height: 1.55; }
+  .review-mark { font-weight: 700; flex-shrink: 0; }
+  .ok .review-mark { color: #34d399; }
+  .no .review-mark { color: #f87171; }
+  .review-line { font-size: 13.5px; color: #a9b1c6; margin-bottom: 5px; }
+  .c-ok { color: #34d399; }
+  .c-no { color: #f87171; }
+  .review-explain {
+    font-size: 13px; color: #7f879e; line-height: 1.75;
+    margin-top: 9px; padding-top: 9px;
+    border-top: 1px dashed rgba(255,255,255,.08);
+  }
+
+  @media (max-width: 480px) {
+    .card { padding: 24px 20px; border-radius: 16px; }
+    .cmp-row { grid-template-columns: 76px 1fr 56px; }
+    .field-head { flex-direction: column; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* =========================================================
+   题库：12 道认知陷阱题
+   ========================================================= */
+const questions = [
+  {
+    q: '一个球拍和一个球一共 1.10 元，球拍比球贵 1.00 元。球多少钱？',
+    options: ['0.10 元', '0.05 元', '0.15 元', '0.55 元'],
+    answer: 1,
+    explain: '设球为 x 元，则球拍为 x + 1.00 元：2x + 1.00 = 1.10，解得 x = 0.05 元。脱口而出的「0.10 元」是错的——这是认知反思测试（CRT）中最经典的陷阱题。'
+  },
+  {
+    q: '5 台机器 5 分钟生产 5 个零件。那么 100 台机器生产 100 个零件需要多长时间？',
+    options: ['100 分钟', '5 分钟', '20 分钟', '1 分钟'],
+    answer: 1,
+    explain: '1 台机器 5 分钟生产 1 个零件。100 台机器同时开工，5 分钟就能各自产出 1 个，共 100 个。答案依然是 5 分钟。'
+  },
+  {
+    q: '湖里有一片睡莲，每天它的面积翻一倍。如果它 48 天可以覆盖整个湖，那么覆盖一半湖面需要多少天？',
+    options: ['24 天', '47 天', '12 天', '36 天'],
+    answer: 1,
+    explain: '第 48 天铺满，因为每天翻倍，所以第 47 天正好是一半。指数增长会让人本能地做线性推算，从而答错。'
+  },
+  {
+    q: '抛一枚均匀硬币，前 5 次都是正面。第 6 次出现哪一面的概率更大？',
+    options: ['正面更大', '反面更大', '两者一样大', '无法判断'],
+    answer: 2,
+    explain: '每次抛掷都是独立事件，概率始终各占 50%。认为「连出正面后反面该来了」，是典型的赌徒谬误。'
+  },
+  {
+    q: '某城市有大小两家医院，每天出生的婴儿中约 50% 是男孩。一年中，记录到「当天出生的男孩比例超过 60%」的日子，哪家医院更多？',
+    options: ['大医院更多', '小医院更多', '两家差不多', '无法判断'],
+    answer: 1,
+    explain: '样本量越小，随机波动的幅度越大。小医院每天出生人数少，比例更容易偏离 50%。这是大数定律的直觉盲区。'
+  },
+  {
+    q: '琳达 31 岁，单身，性格直率，非常聪明。她学生时代主修哲学，关心社会议题，还参加过反核游行。下面哪个说法更可能为真？',
+    options: ['琳达是银行出纳', '琳达是银行出纳，并且是女权主义者', '两者可能性相同', '无法判断'],
+    answer: 0,
+    explain: '两个事件的联合概率永远不可能大于其中单个事件的概率。选项 B 是 A 的子集，所以 A 更可能。这就是「合取谬误」——细节越丰富听起来越可信，但概率反而更低。'
+  },
+  {
+    q: '某种罕见病的患病率约为万分之一。有一种检测手段，对患者的准确率是 99%，对健康人的误报率是 1%。你随机检测结果为阳性，你实际患病的概率大约是多少？',
+    options: ['约 99%', '约 50%', '约 1%', '约 0.01%'],
+    answer: 2,
+    explain: '一万人中约 1 人患病（被检出 0.99 人），另外 9999 个健康人中约 100 人被误报。所以阳性者里真正患病的比例约为 0.99 ÷ (0.99 + 100) ≈ 1%。这就是基础比率谬误。'
+  },
+  {
+    q: '掷 6 个骰子，下面哪种结果出现的概率更大？',
+    options: ['6 个 6', '1、2、3、4、5、6 各出现一次', '两者一样大', '无法判断'],
+    answer: 2,
+    explain: '任何一组指定的 6 个结果，概率都是 (1/6)^6，完全相等。觉得「1-2-3-4-5-6 太有规律、不可能随机出现」只是心理错觉。'
+  },
+  {
+    q: '一个班级有 30 名学生，至少有两人生日在同一天的概率大约是多少？',
+    options: ['约 7%', '约 30%', '约 70%', '约 99%'],
+    answer: 2,
+    explain: '30 个人两两组合有 435 对，重复的可能性远比直觉高。实际概率约为 70.6%。人们习惯只考虑「和我同一天」，而忽略了所有配对。'
+  },
+  {
+    q: '你花 80 元买了张电影票，看了 20 分钟发现非常难看。此时最理性的做法是？',
+    options: ['坚持看完，不然票钱就浪费了', '立刻离场，去做更有价值的事', '至少看完一半再走', '取决于座位好不好'],
+    answer: 1,
+    explain: '票钱已经花掉、无法收回，属于「沉没成本」。理性决策只应看未来的收益与成本：继续看只会继续浪费你的时间。'
+  },
+  {
+    q: '二战期间，统计返航战机上的弹孔分布，发现机翼弹孔最多、引擎弹孔很少。应该优先加固哪里？',
+    options: ['机翼——中弹最多的地方', '引擎——弹孔最少的地方', '机身中部', '随机选择'],
+    answer: 1,
+    explain: '能返航的飞机是被统计到的「幸存者」；引擎中弹的飞机根本回不来。所以要加固的是弹孔「少」的关键部位。这就是幸存者偏差。'
+  },
+  {
+    q: '数据显示：某地冰淇淋销量越高，溺水人数越多。最合理的解释是？',
+    options: ['吃冰淇淋会导致溺水', '溺水事件促使人们买冰淇淋', '两者都受气温驱动，存在共同原因', '纯属巧合，没有关联'],
+    answer: 2,
+    explain: '相关不等于因果。夏天天气热，既让人吃更多冰淇淋，也让更多人下水游泳。这属于「第三变量」问题。'
+  }
+];
+
+/* =========================================================
+   状态
+   ========================================================= */
+const state = {
+  screen: 'intro',
+  predicted: 6,      // 预测答对题数
+  percentile: 50,    // 自评百分位
+  qIndex: 0,
+  answers: []
+};
+
+/* =========================================================
+   渲染
+   ========================================================= */
+function render() {
+  const app = document.getElementById('app');
+  let html = '';
+
+  switch (state.screen) {
+    case 'intro':    html = introHTML();    break;
+    case 'selfEval': html = selfEvalHTML(); break;
+    case 'quiz':     html = quizHTML();     break;
+    case 'result':   html = resultHTML();   break;
+  }
+
+  app.innerHTML = html;
+
+  if (state.screen === 'selfEval') bindSelfEval();
+  if (state.screen === 'quiz')     bindQuiz();
+  if (state.screen === 'result')   bindResult();
+
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function go(screen) {
+  state.screen = screen;
+  render();
+}
+
+/* ---------------- 首页 ---------------- */
+function introHTML() {
+  return `
+  <div class="card">
+    <div class="eyebrow">Dunning–Kruger · 自测</div>
+    <h1>你是不是高估了自己？</h1>
+    <p class="lead">
+      邓宁-克鲁格效应说的是：能力不足的人往往高估自己，而能力强的人反而低估自己。
+      这个测评会让你先预测自己的表现，再做 12 道题，最后把「你以为的自己」和「实际的你」放在一起对比。
+    </p>
+
+    <ul class="list">
+      <li><span class="dot"></span>12 道逻辑 / 统计 / 思维陷阱题</li>
+      <li><span class="dot"></span>先自评再作答，避免被题目带偏</li>
+      <li><span class="dot"></span>结果给出校准指数 + 逐题解析</li>
+    </ul>
+
+    <p class="note">
+      ⚠️ 这是一次自我对照，不是严格的心理测量。真正的 DK 研究需要大样本和真实技能测试，
+      所以请把它当作一面镜子，而不是一张诊断书。
+    </p>
+
+    <button class="btn" onclick="go('selfEval')">开始测评</button>
+  </div>`;
+}
+
+/* ---------------- 自评 ---------------- */
+function selfEvalHTML() {
+  return `
+  <div class="card">
+    <div class="eyebrow">第 1 步 · 先别做题</div>
+    <h2>凭直觉预测你自己</h2>
+    <p class="sub">不要偷看题目。凭第一感觉填，这两项会决定后面「高估 / 低估」的判断。</p>
+
+    <div class="field">
+      <div class="field-head">
+        <span>这套题共 12 道，你觉得你能答对几道？</span>
+        <strong id="predVal">6 道</strong>
+      </div>
+      <input type="range" id="predRange" min="0" max="12" step="1" value="6">
+      <div class="range-ticks"><span>0</span><span>6</span><span>12</span></div>
+    </div>
+
+    <div class="field">
+      <div class="field-head">
+        <span>在「逻辑与统计思维」上，你认为自己处在人群的什么位置？</span>
+        <strong id="pctVal">50%</strong>
+      </div>
+      <input type="range" id="pctRange" min="1" max="99" step="1" value="50">
+      <div class="range-ticks"><span>垫底 1%</span><span>中游 50%</span><span>顶尖 99%</span></div>
+    </div>
+
+    <button class="btn" onclick="startQuiz()">锁定预测，开始答题</button>
+  </div>`;
+}
+
+function bindSelfEval() {
+  const pr = document.getElementById('predRange');
+  const pv = document.getElementById('predVal');
+  const rr = document.getElementById('pctRange');
+  const rv = document.getElementById('pctVal');
+
+  state.predicted  = +pr.value;
+  state.percentile = +rr.value;
+  pv.textContent = pr.value + ' 道';
+  rv.textContent = rr.value + '%';
+
+  pr.oninput = () => { state.predicted  = +pr.value; pv.textContent = pr.value + ' 道'; };
+  rr.oninput = () => { state.percentile = +rr.value; rv.textContent = rr.value + '%'; };
+}
+
+/* ---------------- 答题 ---------------- */
+function quizHTML() {
+  const q = questions[state.qIndex];
+  const pct = (state.qIndex / questions.length) * 100;
+
+  return `
+  <div class="card">
+    <div class="progress"><div style="width:${pct}%"></div></div>
+    <div class="qmeta">第 ${state.qIndex + 1} / ${questions.length} 题</div>
+    <h2 class="qtext">${q.q}</h2>
+    <div id="options">
+      ${q.options.map((o, i) =>
+        `<button class="option" data-i="${i}">${String.fromCharCode(65 + i)}. ${o}</button>`
+      ).join('')}
+    </div>
+  </div>`;
+}
+
+function startQuiz() {
+  state.qIndex = 0;
+  state.answers = [];
+  state.screen = 'quiz';
+  render();
+}
+
+function bindQuiz() {
+  const opts = document.querySelectorAll('.option');
+  opts.forEach(btn => {
+    btn.onclick = () => {
+      if (btn.classList.contains('locked')) return;
+      opts.forEach(b => b.classList.add('locked'));
+
+      const i = +btn.dataset.i;
+      state.answers[state.qIndex] = i;
+      btn.classList.add('selected');
+
+      setTimeout(() => {
+        if (state.qIndex < questions.length - 1) {
+          state.qIndex++;
+          render();
+        } else {
+          state.screen = 'result';
+          render();
+        }
+      }, 280);
+    };
+  });
+}
+
+/* ---------------- 结果 ---------------- */
+function resultHTML() {
+  let correct = 0;
+  state.answers.forEach((a, i) => { if (a === questions[i].answer) correct++; });
+
+  const predicted = state.predicted;
+  const diff = predicted - correct;
+  const scoreRate = Math.round((correct / questions.length) * 100);
+  const v = classify(diff, predicted, correct);
+
+  return `
+  <div class="card">
+    <div class="eyebrow">测评结果</div>
+
+    <div class="verdict" style="border-color:${v.color}66;">
+      <div class="verdict-badge" style="background:${v.color}22; color:${v.color};">${v.tag}</div>
+      <h2 style="color:${v.color}">${v.title}</h2>
+      <p>${v.desc}</p>
+    </div>
+
+    <div class="compare">
+      <div class="cmp-row">
+        <div class="cmp-label">你预测答对</div>
+        <div class="cmp-bar"><div class="cmp-fill pred" style="width:${predicted / questions.length * 100}%"></div></div>
+        <div class="cmp-val">${predicted} / 12</div>
+      </div>
+      <div class="cmp-row">
+        <div class="cmp-label">实际答对</div>
+        <div class="cmp-bar"><div class="cmp-fill real" style="width:${scoreRate}%"></div></div>
+        <div class="cmp-val">${correct} / 12</div>
+      </div>
+    </div>
+
+    <div class="meta-line">
+      你自评在人群中处于前 <b>${state.percentile}%</b>，实际答对率 <b>${scoreRate}%</b>。
+      ${state.percentile - scoreRate > 20
+        ? '这两个数字之间的落差，本身就值得留意。'
+        : state.percentile - scoreRate < -20
+        ? '你把自己放得比实际位置低了不少。'
+        : '两者大致处在同一个量级上。'}
+    </div>
+
+    <details>
+      <summary>展开逐题解析（${questions.length} 题）</summary>
+      <div style="padding-top:14px;">${reviewHTML()}</div>
+    </details>
+
+    <button class="btn ghost" onclick="restart()">重新测一次</button>
+
+    <p class="note" style="margin-top:24px;">
+      提示：邓宁-克鲁格效应并不是「笨的人自信、聪明的人谦虚」这么简单。
+      它真正讲的是 <b>元认知</b> —— 判断「自己知道什么、不知道什么」的能力。
+      而这种能力，恰恰只有在你真的去了解一个领域之后，才会长出来。
+    </p>
+  </div>`;
+}
+
+/* 判定等级 */
+function classify(diff, predicted, correct) {
+  if (diff >= 4) {
+    return {
+      tag: '严重高估',
+      title: '你正站在「愚昧之巅」',
+      color: '#fb923c',
+      desc: `你预计答对 ${predicted} 题，实际答对 ${correct} 题，高了 ${diff} 题。
+             这是邓宁-克鲁格效应最经典的样子：因为对这类问题缺乏足够的判断力，
+             你同时也失去了「判断自己是否懂」的能力。真正的知识缺口，
+             往往藏在你还不知道它们存在的地方。<br><br>
+             不过别急——意识到这个落差，本身就是从「愚昧之巅」滑向「绝望之谷」的开始，
+             而那是唯一一条向上的路。`
+    };
+  }
+  if (diff >= 2) {
+    return {
+      tag: '轻度高估',
+      title: '你比自己以为的稍微差一点',
+      color: '#fbbf24',
+      desc: `你预计答对 ${predicted} 题，实际答对 ${correct} 题，高了 ${diff} 题。
+             你的自信比实际表现稍微跑在前面了一点。适度的自信是好事，它能让你敢于尝试；
+             但如果这个差距在重要决策上反复出现，就要留个心眼了——
+             做判断前多问自己一句「我可能错在哪里」。`
+    };
+  }
+  if (diff >= -1) {
+    return {
+      tag: '校准良好',
+      title: '你对自己的判断挺准',
+      color: '#34d399',
+      desc: `你预计答对 ${predicted} 题，实际答对 ${correct} 题，相差 ${Math.abs(diff)} 题。
+             你的自我评估和实际表现基本吻合。这意味着你大致知道自己知道什么，
+             也隐约知道自己不知道什么——这种「元认知」本身就是一种稀缺能力，
+             很多人一辈子都做不到。`
+    };
+  }
+  return {
+    tag: '低估自己',
+    title: '你比自己以为的要好',
+    color: '#60a5fa',
+    desc: `你预计答对 ${predicted} 题，实际答对 ${correct} 题，低了 ${Math.abs(diff)} 题。
+             你的实际表现明显好于你自己的预期。邓宁和克鲁格在原始研究里也发现：
+             能力较强的人常常低估自己，因为他们默认「别人应该也都能轻松做到」。
+             如果这种低估长期存在，它可能会让你错过本该属于你的机会——
+             偶尔也可以更信任自己一点。`
+  };
+}
+
+/* 逐题解析 */
+function reviewHTML() {
+  return questions.map((q, i) => {
+    const userAns = state.answers[i];
+    const isRight = userAns === q.answer;
+    return `
+      <div class="review-item ${isRight ? 'ok' : 'no'}">
+        <div class="review-head">
+          <span class="review-mark">${isRight ? '✓' : '✕'}</span>
+          <span>${i + 1}. ${q.q}</span>
+        </div>
+        <div class="review-line">
+          你的答案：<b class="${isRight ? 'c-ok' : 'c-no'}">
+            ${String.fromCharCode(65 + userAns)}. ${q.options[userAns]}
+          </b>
+        </div>
+        ${isRight ? '' : `
+        <div class="review-line">
+          正确答案：<b class="c-ok">
+            ${String.fromCharCode(65 + q.answer)}. ${q.options[q.answer]}
+          </b>
+        </div>`}
+        <div class="review-explain">${q.explain}</div>
+      </div>`;
+  }).join('');
+}
+
+/* 重置 */
+function restart() {
+  state.screen = 'intro';
+  state.qIndex = 0;
+  state.answers = [];
+  state.predicted = 6;
+  state.percentile = 50;
+  render();
+}
+
+/* 启动 */
+render();
+</script>
+</body>
+</html>
